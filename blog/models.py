@@ -1,5 +1,7 @@
 from django.db import models
 from users.models import User
+from mptt.models import TreeForeignKey
+from django.utils.translation import gettext_lazy as _
 
 class BaseModel(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
@@ -8,11 +10,31 @@ class BaseModel(models.Model):
     class Meta:
         abstract=True
 
+class Category(BaseModel):
+    name = models.CharField(
+        verbose_name=_("Category Name"),
+        help_text=_("Required and unique"),
+        max_length=255,
+        unique=True,
+    )
+    slug = models.SlugField(verbose_name=_("Category safe URL"), max_length=255, unique=True)
+    parent = TreeForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="children")
+
+    class MPTTMeta:
+        order_insertion_by = ["name"]
+
+    class Meta:
+        verbose_name = _("Category")
+        verbose_name_plural = _("Categories")
+
+    def __str__(self):
+        return self.name
 
 class Post(BaseModel):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.RESTRICT, related_name="category")
+    title = models.CharField(max_length=200, verbose_name=_("title"), help_text=_("Required"),)
     thumbnail = models.ImageField(upload_to='blogs')
-    title = models.CharField(max_length=200)
     context = models.TextField()
     likes = models.IntegerField(default=0)
     
