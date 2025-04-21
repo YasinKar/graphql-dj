@@ -1,6 +1,6 @@
 from django.db import models
 from users.models import User
-from mptt.models import TreeForeignKey
+from mptt.models import TreeForeignKey, MPTTModel
 from django.utils.translation import gettext_lazy as _
 
 class BaseModel(models.Model):
@@ -10,7 +10,7 @@ class BaseModel(models.Model):
     class Meta:
         abstract=True
 
-class Category(BaseModel):
+class Category(MPTTModel, BaseModel):
     name = models.CharField(
         verbose_name=_("Category Name"),
         help_text=_("Required and unique"),
@@ -31,8 +31,8 @@ class Category(BaseModel):
         return self.name
 
 class Post(BaseModel):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    category = models.ForeignKey(Category, on_delete=models.RESTRICT, related_name="category")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts")
+    category = models.ForeignKey(Category, on_delete=models.RESTRICT, related_name="posts")
     title = models.CharField(max_length=200, verbose_name=_("title"), help_text=_("Required"),)
     thumbnail = models.ImageField(upload_to='blogs')
     context = models.TextField()
